@@ -1,3 +1,4 @@
+
 package com.flatironschool.javacs;
 
 import java.io.IOException;
@@ -9,43 +10,81 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
 import org.jsoup.select.Elements;
+import org.omg.CORBA.Current;
+
 
 public class WikiPhilosophy {
 	
 	final static WikiFetcher wf = new WikiFetcher();
-	
-	/**
-	 * Tests a conjecture about Wikipedia and Philosophy.
-	 * 
-	 * https://en.wikipedia.org/wiki/Wikipedia:Getting_to_Philosophy
-	 * 
-	 * 1. Clicking on the first non-parenthesized, non-italicized link
-     * 2. Ignoring external links, links to the current page, or red links
-     * 3. Stopping when reaching "Philosophy", a page with no links or a page
-     *    that does not exist, or when a loop occurs
-	 * 
-	 * @param args
-	 * @throws IOException
-	 */
 	public static void main(String[] args) throws IOException {
 		
         // some example code to get you started
-
-		String url = "https://en.wikipedia.org/wiki/Java_(programming_language)";
-		Elements paragraphs = wf.fetchWikipedia(url);
-
-		Element firstPara = paragraphs.get(0);
+		String link_basic = "https://en.wikipedia.org";
+		String url_wiki = "/wiki/Metaphysics";
+		String combined = link_basic + url_wiki;
 		
-		Iterable<Node> iter = new WikiNodeIterable(firstPara);
-		for (Node node: iter) {
-			if (node instanceof TextNode) {
-				System.out.print(node);
-			}
-        }
+		
+		Element Paragraph;
+		Elements link;
+		ArrayList <String> done = new ArrayList<String>();
+		while(!(combined.equals("https://en.wikipedia.org/wiki/Philosophy"))){
+				int index = 0;
+				Elements Paragraph_local = wf.fetchWikipedia(combined);
+				done.add(combined);
+            do{
+            	Paragraph = Paragraph_local.get(index);
+				index = index + 1;
+				link = Paragraph.select("a");
+				
+            }while(link.isEmpty() && index < Paragraph_local.size());
 
-        // the following throws an exception so the test fails
-        // until you update the code
-        String msg = "Complete this lab by adding your code and removing this statement.";
-        throw new UnsupportedOperationException(msg);
+            if(index >= Paragraph_local.size()) {
+            	System.out.println("no link in the page" + combined);
+            	System.out.println(done.toString());
+            	return;
+            }
+
+            boolean testParenth = false;
+
+            Iterable<Node> iter = new WikiNodeIterable(Paragraph);
+			boolean found_link = false;
+            
+			for (Node node: iter)
+			{
+				if (node instanceof TextNode)
+				{
+					if(node.toString().contains("(")||node.toString().contains(")"))
+						testParenth = true;	
+					
+				}
+				if(testParenth == false  && link.contains(node)){
+					url_wiki = node.toString();
+					int place = url_wiki.indexOf("\"", 10);
+					url_wiki = url_wiki.substring(9, place);
+					combined = link_basic.concat(url_wiki);
+					found_link = true;
+				
+					if(done.contains(combined))
+					{
+						System.out.println("We have already visited page: " + combined);
+						System.out.println("\n" + done.toString());
+						return;
+					}
+				}
+				
+				if(found_link == true){
+					break;
+				}
+			}
+				
+		}
+
+		done.add("https://en.wikipedia.org/wiki/Philosophy");
+		System.out.println("Found!\n" + done.toString());
+		
+		
+	
+	
+        
 	}
 }
